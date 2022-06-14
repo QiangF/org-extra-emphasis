@@ -1,0 +1,44 @@
+#+TITLE: Test file for =org-extra-emphasis= library
+
+* Demo of extra emphasis markers ==!!== and ==!@==
+
+!!Ea consectetur laboris adipiscing et ipsum labore esse qui minim
+pariatur et sunt sunt nostrud anim laborum culpa.!!
+
+!@Minim reprehenderit excepteur elit, dolore elit, veniam, eu.
+Ullamco dolore elit, cupidatat sed labore ea aute.!@
+
+Pariatur !!et lorem cupidatat !@minim irure!@ proident, ad.!!  Eiusmod
+sunt et lorem labore ex aliqua aute esse.
+
+Ut mollit !@duis velit est est magna in quis ipsum.  !!Aliqua aliqua
+non laboris exercitation cupidatat aliqua incididunt.!!  Qui voluptate
+irure aute occaecat laborum cillum est.!@  Quis magna dolor ullamco
+magna do consectetur est laborum enim ut.
+
+* !!Demo of extra emphasis markers in a styled paragraph!!
+
+#+ATTR_ODT: :target "extra_styles"
+#+begin_src nxml
+<style:style style:name="Warn"
+	     style:parent-style-name="Text_20_body"
+	     style:family="paragraph">
+  <style:paragraph-properties>
+    <style:tab-stops />
+  </style:paragraph-properties>
+  <style:text-properties fo:background-color="#ff0000"
+		       fo:color="#ffffff"
+		       fo:font-size="20pt"
+		       fo:font-style="italic"
+		       fo:font-weight="bold" />
+</style:style>
+#+end_src
+
+#+ATTR_ODT: :style "Warn"
+Proident, duis dolore consectetur sed nisi ea pariatur.  Esse
+proident, cillum duis qui ullamco sint cillum magna.  !!Eiusmod
+veniam, !@sint officia!@ non consectetur laboris cillum.!!  Cillum
+mollit consequat eu dolore ullamco qui reprehenderit anim cillum
+in consectetur consequat sunt dolore aliquip voluptate
+consectetur anim ea.  Voluptate nisi est incididunt aliquip
+excepteur aliqua id do enim ut non consequat.
