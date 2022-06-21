@@ -82,16 +82,16 @@
 	  ;; #+ATTR_ODT: :target "extra_styles"
 	  ;; #+begin_src nxml
 	  ;; <style:style style:name="Warn"
-	  ;; 	     style:parent-style-name="Text_20_body"
-	  ;; 	     style:family="paragraph">
+	  ;;	     style:parent-style-name="Text_20_body"
+	  ;;	     style:family="paragraph">
 	  ;;   <style:paragraph-properties>
 	  ;;     <style:tab-stops />
 	  ;;   </style:paragraph-properties>
 	  ;;   <style:text-properties fo:background-color="#ff0000"
-	  ;; 		       fo:color="#ffffff"
-	  ;; 		       fo:font-size="20pt"
-	  ;; 		       fo:font-style="italic"
-	  ;; 		       fo:font-weight="bold" />
+	  ;;		       fo:color="#ffffff"
+	  ;;		       fo:font-size="20pt"
+	  ;;		       fo:font-style="italic"
+	  ;;		       fo:font-weight="bold" />
 	  ;; </style:style>
 	  ;; #+end_src
 
@@ -120,18 +120,75 @@
 ;; available at https://github.com/kjambunathan/org-extra-emphasis and
 ;; the screenshots can be seen in https://github.com/kjambunathan/org-extra-emphasis/tree/main/screenshots
 ;;
+
+;; Default Settings
+;; ================
+;;
+;; 16 Emphasis Markers
+;; ===================
+;;
+;; This library defines the following 16 emphasis markers, 
+;;
+;; |----+----+----+----|
+;; | !! | !@ | !% | !& |
+;; |----+----+----+----|
+;; | @! | @@ | @% | @& |
+;; |----+----+----+----|
+;; | %! | %@ | %% | %& |
+;; |----+----+----+----|
+;; | &! | &@ | &% | && |
+;; |----+----+----+----|
+;;
+;; The above markers are all pairings of the following four characters:
+;;     ! @ % &
+;;
+;; It is hoped that these set of emphasis markers don't pose issues
+;; while exporting.
+;;
+;; 17 Extra Emphasis Faces
+;; =======================
+;;  
+;; This library defines 17 faces:
+;;
+;; - one base face `org-extra-emphasis'
+;; - 16 more faces `org-extra-emphasis-01',`org-extra-emphasis-02',
+;;  ..., `org-extra-emphasis-16'.
+;;
+;; The later 16 faces derive from `org-extra-emphasis' face.  Of
+;; these, only the first two faces `org-extra-emphasis-01' and
+;; `org-extra-emphasis-02' are explicitly configured.  If you are
+;; using more than 2 emphasis markers, you may want to configure the
+;; other 14 faces.
+;;
+;; `org-extra-emphasis-alist' already associated 16 emphasis markers
+;; with 16 different faces.
+;;
 ;; Customization
 ;; =============
-
-;; Customize `org-extra-emphasis-alist' to set the emphasis markers
-;; and their associated faces.  When choosing your own marker, ensure
-;; that you exercise some care.  For example, if you choose `#' as a
-;; marker you are likely to get malformed `html' and `odt' files.
 ;;
-;; This library defines two faces `org-extra-emphasis-1'and
-;; `org-extra-emphasis-2'.
+;; Configuring your own Emphasis Markers
+;; =====================================
+;; 
+;; 16 numbers of emphasis markers should suffice in practice.
+;; However, if none of the above emphasis markers resonate with you,
+;; you can customize `org-extra-emphasis-alist', and plug in your own
+;; markers.  When choosing your own marker, ensure that you exercise
+;; some care.  For example, if you choose `#' as a marker you are
+;; likely to get malformed `html' and `odt' files.
+;;
+;; Configuring Extra Emphasis Faces
+;; ===============================
+;;
+;; You can use `M-x customize-group RET org-extra-emphasis-faces RET'
+;; to configure the extra emphasis faces.
+;;
+;; Disabling the Extra Emphasis
+;; =============================
 ;;
 ;; You can use `M-x org-extra-emphasis-mode' to toggle this feature.
+;;
+;; Adding additional export backends
+;; =================================
 ;;
 ;; To add additional backends, modify `org-extra-emphasis-formatter'
 ;; and `org-extra-emphasis-build-backend-regexp'.
@@ -325,7 +382,7 @@ differences are:
 	      (throw :exit t))))))))
 
 ;; There is no `:set' function for `deffaces'.  So, when the extra
-;; faces `org-extra-emphasis-1', `org-extra-emphasis-2' reconfigured,
+;; faces `org-extra-emphasis-01', `org-extra-emphasis-02' reconfigured,
 ;; we don't get a notification.  The following export hook ensures
 ;; that `org-extra-emphasis-info' is in sync with user configuration.
 (add-hook 'org-export-before-processing-hook 'org-extra-emphasis-update)
@@ -358,7 +415,7 @@ emphasis marker, you need to search for `&lt;&lt;' in the
 exported HTML file.
 
 See `org-extra-emphasis-alist' for more information"
-    (cl-loop for (marker . spec) in (plist-get org-extra-emphasis-info :work-alist) collect
+  (cl-loop for (marker . spec) in (plist-get org-extra-emphasis-info :work-alist) collect
 	   (cons marker
 		 (cl-loop for backend in org-extra-emphasis-backends collect
 			  (cons backend
@@ -407,23 +464,112 @@ specified in `org-extra-emphasis-alist'."
 
 ;;; Custom Faces
 
-(defface org-extra-emphasis-1
-  '((t (:background "yellow")))
+(defface org-extra-emphasis
+  '((t (:inherit default)))
   "A face for Org Extra Emphasis."
-  :group 'org-extra-emphasis)
+  :group 'org-extra-emphasis-faces)
 
-(defface org-extra-emphasis-2
-  '((t (:foreground "red")))
-  "A Face for Org Extra Emphasis."
-  :group 'org-extra-emphasis)
+(defface org-extra-emphasis-01
+  '((t (:inherit org-extra-emphasis :background "yellow")))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-02
+  '((t (:inherit org-extra-emphasis :foreground "red")))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-03
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-04
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-05
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-06
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-07
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-08
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-09
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-10
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-11
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-12
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-13
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-14
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-15
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
+
+(defface org-extra-emphasis-16
+  '((t (:inherit org-extra-emphasis)))
+  "A face for Org Extra Emphasis."
+  :group 'org-extra-emphasis-faces)
 
 ;;;; Useful Org Setting
 
 (setcar (last org-emphasis-regexp-components) 5)
 
 (defcustom org-extra-emphasis-alist
-  '(("!!" org-extra-emphasis-1)
-    ("!@" org-extra-emphasis-2))
+  '(("!!" org-extra-emphasis-01)
+    ("!@" org-extra-emphasis-02)
+    ("!%" org-extra-emphasis-03)
+    ("!&" org-extra-emphasis-04)
+    ("@!" org-extra-emphasis-05)
+    ("@@" org-extra-emphasis-06)
+    ("@%" org-extra-emphasis-07)
+    ("@&" org-extra-emphasis-08)
+    ("%!" org-extra-emphasis-09)
+    ("%@" org-extra-emphasis-10)
+    ("%%" org-extra-emphasis-11)
+    ("%&" org-extra-emphasis-12)
+    ("&!" org-extra-emphasis-13)
+    ("&@" org-extra-emphasis-14)
+    ("&%" org-extra-emphasis-15)
+    ("&&" org-extra-emphasis-16))
   "Alist of emphasis marker and its associated face."
   :group 'org-extra-emphasis
   :type '(repeat
