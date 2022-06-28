@@ -303,7 +303,9 @@ Current state is maintined in `org-extra-emphasis-info', a plist."
 		   (sleep-for 2)
 		   (setq org-odt-extra-styles nil))
 		 (setq org-odt-extra-styles
-		       (concat (or org-odt-extra-styles "")
+		       (concat (or (when (boundp 'org-odt-extra-styles)
+				     (get 'org-odt-extra-styles 'saved-value))
+				   "")
 			       "\n\n"
 			       odt-styles))
 		 (message "`org-odt-extra-styles' is updated for this session")
