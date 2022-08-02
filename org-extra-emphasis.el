@@ -203,7 +203,7 @@
 ;;; Internal Variables
 
 (defvar org-extra-emphasis-backends
-  '(html odt))
+  '(html odt ods))
 
 (defvar org-extra-emphasis-info
   (list :enabled nil))
@@ -290,7 +290,7 @@ Current state is maintined in `org-extra-emphasis-info', a plist."
 	     (org-extra-emphasis-build-backend-regexp))
 
   ;; - Generate ODT character styles for the extra emphasis faces and
-  ;;   dump those in `org-odt-extra-styles'.
+  ;;   dump those in `org-odt-extra-styles' and `org-ods-automatic-styles'.
   (plist-put org-extra-emphasis-info :odt-extra-styles
 	     (let* ((odt-styles
 		     (concat (mapconcat #'identity
@@ -308,7 +308,13 @@ Current state is maintined in `org-extra-emphasis-info', a plist."
 				   "")
 			       "\n\n"
 			       odt-styles))
-		 (message "`org-odt-extra-styles' is updated for this session")
+		 (setq org-ods-automatic-styles
+		       (concat (or (when (boundp 'org-ods-automatic-styles)
+				     (get 'org-ods-automatic-styles 'saved-value))
+				   "")
+			       "\n\n"
+			       odt-styles))
+		 (message "`org-odt-extra-styles' and `org-ods-automatic-styles' is updated for this session")
 		 (sleep-for 1))
 	       odt-styles))
   ;; Re-fontify all Org buffers based on current configuration.
@@ -400,7 +406,7 @@ This currently supports HTML and ODT backends.
 See `org-extra-emphasis-alist' for MARKER to face mappings."
   (let* ((face (car (assoc-default marker (plist-get org-extra-emphasis-info :work-alist)))))
     (cl-case backend
-      (odt
+      ((odt ods)
        (format "<text:span text:style-name=\"%s\">%s</text:span>"
 	       (car (org-odt-hfy-face-to-css face)) text))
       (html
