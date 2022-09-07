@@ -127,7 +127,7 @@
 ;; 16 Emphasis Markers
 ;; ===================
 ;;
-;; This library defines the following 16 emphasis markers, 
+;; This library defines the following 16 emphasis markers,
 ;;
 ;; |----+----+----+----|
 ;; | !! | !@ | !% | !& |
@@ -147,7 +147,7 @@
 ;;
 ;; 17 Extra Emphasis Faces
 ;; =======================
-;;  
+;;
 ;; This library defines 17 faces:
 ;;
 ;; - one base face `org-extra-emphasis'
@@ -168,7 +168,7 @@
 ;;
 ;; Configuring your own Emphasis Markers
 ;; =====================================
-;; 
+;;
 ;; 16 numbers of emphasis markers should suffice in practice.
 ;; However, if none of the above emphasis markers resonate with you,
 ;; you can customize `org-extra-emphasis-alist', and plug in your own
@@ -200,7 +200,9 @@
 (require 'rx)
 (require 'htmlfontify)
 
-;;; Internal Variables
+;;; PART-1: `org-extra-emphasis-mode'
+
+;;;; Internal Variables
 
 (defvar org-extra-emphasis-backends
   '(html odt ods))
@@ -323,7 +325,7 @@ Current state is maintined in `org-extra-emphasis-info', a plist."
       (when (derived-mode-p 'org-mode)
 	(font-lock-flush)))))
 
-;;; Fontify Extra Emphasis Markers
+;;;; Fontify Extra Emphasis Markers
 
 (defun org-extra-emphasis-org-do-emphasis-faces (limit)
   "Workhorse function that does fontification This function is
@@ -395,7 +397,7 @@ differences are:
 ;; that `org-extra-emphasis-info' is in sync with user configuration.
 (add-hook 'org-export-before-processing-hook 'org-extra-emphasis-update)
 
-;;; Export Extra Emphasis Markers
+;;;; Export Extra Emphasis Markers
 
 (defun org-extra-emphasis-formatter (marker text backend)
   "Style TEXT in the same font face as the face MARKER is mapped to.
@@ -470,9 +472,9 @@ specified in `org-extra-emphasis-alist'."
 (add-to-list 'org-export-filter-plain-text-functions
 	     'org-extra-emphasis-plain-text-filter)
 
-;;; User Options & Commands
+;;;; User Options & Commands
 
-;;;; Custom Groups
+;;;;; Custom Groups
 
 (defgroup org-extra-emphasis nil
   "Options for highlighting and exporting extra emphasis markers in Org files."
@@ -484,7 +486,7 @@ specified in `org-extra-emphasis-alist'."
   :group 'org-extra-emphasis
   :group 'faces)
 
-;;; Custom Faces
+;;;; Custom Faces
 
 (defface org-extra-emphasis
   '((t (:inherit default)))
@@ -571,7 +573,7 @@ specified in `org-extra-emphasis-alist'."
   "A face for Org Extra Emphasis."
   :group 'org-extra-emphasis-faces)
 
-;;;; Useful Org Setting
+;;;;; Useful Org Setting
 
 (setcar (last org-emphasis-regexp-components) 5)
 
@@ -612,7 +614,7 @@ specified in `org-extra-emphasis-alist'."
 	 (plist-put org-extra-emphasis-info :enabled val)
 	 (org-extra-emphasis-update)))
 
-;;;; Command
+;;;;; `M-x org-extra-emphasis-mode'
 
 (defun org-extra-emphasis-mode (&optional arg)
   "Enable / Disable Org Extra Emphasis.
@@ -636,4 +638,118 @@ positive; disable otherwise."
   (plist-put org-extra-emphasis-info :enabled org-extra-emphasis)
   (org-extra-emphasis-update))
 
+;;; PART-2: `org-extra-emphasis-intraword-emphasis-mode'
+
+;;;; User options
+
+(defface org-extra-emphasis-zws-face
+  '((t (:inherit org-extra-emphasis :foreground "red")))
+  "Use this face to highlight the ZERO WIDTH SPACE character."
+  :group 'org-extra-emphasis-faces)
+
+(defcustom org-extra-emphasis-zws-display-char ?\N{SPACING UNDERSCORE}
+  "Use the glyph of this character to display ZERO WIDTH SPACE.
+
+Set this to nil, if you want the ZERO WIDTH SPACE to remain
+inconspicuous in the buffer.  Note that even if ZERO WIDTH SPACE
+is inconspicuos in the buffer, the ZERO WIDTH SPACE will be
+stripped from the export output accoding to the value of
+`org-extra-emphasis-intraword-emphasis-mode'."
+  :type '(choice (const :tag "Disabled" nil)
+		 (character :tag "Display ZERO WIDTH SPACE as "))
+  :group 'org-extra-emphasis)
+
+;;;; Internal Variables
+
+(defvar-local org-extra-emphasis-stashed-display-table nil
+  "Stashed value of `buffer-display-table'.
+
+This is the value of `buffer-display-table' before
+`org-extra-emphasis-intraword-emphasis-mode' is turned on in the
+buffer.
+
+Use this value to restore a buffer's `buffer-display-table' when
+`org-extra-emphasis-intraword-emphasis-mode' is turned off in the
+buffer.")
+
+;;;;  `M-x org-extra-emphasis-intraword-emphasis-mode'
+
+;;;###autoload
+(define-minor-mode org-extra-emphasis-intraword-emphasis-mode
+  "Toggle intra word emphasis in `org-mode' export.
+
+When `org-extra-emphasis-intraword-emphasis-mode' is enabled:
+
+- ZERO WIDTH SPACE characters are stripped from export backends.
+- ZERO WIDTH SPACE characters are displayed using
+  `org-extra-emphasis-zws-display-char' and highlighted with
+  `org-extra-emphasis-zws-face' space.
+
+TIPS for the user:
+
+1. You can insert ZERO WIDTH SPACE using
+
+       `M-x insert-char RET ZERO WIDTH SPACE RET'
+
+   One another way is to store that the ZERO WIDTH SPACE in a
+   register, say SPC, and
+
+       (set-register ?\N{SPACE} \"\N{ZERO WIDTH SPACE}\")
+       
+   and use the \\[insert-register] command on that register to insert
+   the ZERO WIDTH SPACE character.
+
+2. You can examine the presence of ZERO WIDTH SPACE character in the
+   export output by turning on the `glyphless-display-mode'."
+  :lighter " ZWS"
+  :init-value nil
+  :global t
+  :group 'org-extra-emphasis
+  (cond
+   ;; Turn ON `org-extra-emphasis-intraword-emphasis-mode'
+   (org-extra-emphasis-intraword-emphasis-mode
+    (when org-extra-emphasis-zws-display-char
+	    ;; Display ZERO WIDTH CHAR in a conspicuous way.
+	    (setq org-extra-emphasis-stashed-display-table (copy-sequence buffer-display-table))
+	    (unless buffer-display-table
+	      (setq buffer-display-table (make-display-table)))
+	    (aset buffer-display-table
+		  ?\N{ZERO WIDTH SPACE}
+		  (vector (make-glyph-code org-extra-emphasis-zws-display-char
+					   'org-extra-emphasis-zws-face)))))
+   (t
+    ;; Turn OFF `org-extra-emphasis-intraword-emphasis-mode'
+    (when org-extra-emphasis-zws-display-char
+      ;; Restore the buffer's original `buffer-display-table'.
+      (setq buffer-display-table org-extra-emphasis-stashed-display-table)))))
+
+;; Adjust `buffer-display-table' so that ZERO WIDTH SPACE characters
+;; are displayed.
+(add-hook 'org-mode-hook 'org-extra-emphasis-intraword-emphasis-mode t)
+
+;;;; Export hook to strip ZERO WIDTH SPACE
+
+(defun org-extra-emphasis-strip-zws-maybe (text _backend _info)
+  "Strip ZERO WIDTH SPACE from TEXT.
+
+If `org-extra-emphasis-intraword-emphasis-mode' is enabled, strip
+ZERO WIDTH SPACE from TEXT.  Otherwise, return TEXT unmodified."
+  (cond
+   ;; `org-extra-emphasis-intraword-emphasis-mode' is ON
+   (org-extra-emphasis-intraword-emphasis-mode
+    ;; Strip ZERO WIDTH SPACE.
+    (replace-regexp-in-string
+     (rx-to-string `(one-or-more ,(char-to-string ?\N{ZERO WIDTH SPACE})))
+     "" text t t))
+   ;; `org-extra-emphasis-intraword-emphasis-mode' is OFF.
+   (t
+    ;; Nothing to do.
+    text)))
+
+;; Configure Org Export Engine to strip ZERO WIDTH SPACE, if needed.
+(add-to-list 'org-export-filter-final-output-functions
+	     'org-extra-emphasis-strip-zws-maybe t)
+
 (provide 'org-extra-emphasis)
+
+;;; org-extra-emphasis.el ends here
