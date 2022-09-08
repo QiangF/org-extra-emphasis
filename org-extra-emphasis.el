@@ -747,7 +747,7 @@ ZERO WIDTH SPACE from TEXT.  Otherwise, return TEXT unmodified."
     text)))
 
 ;; Configure Org Export Engine to strip ZERO WIDTH SPACE, if needed.
-(add-to-list 'org-export-filter-final-output-functions
+(add-to-list 'org-export-filter-plain-text-functions
 	     'org-extra-emphasis-strip-zws-maybe t)
 
 (provide 'org-extra-emphasis)
