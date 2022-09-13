@@ -469,8 +469,9 @@ specified in `org-extra-emphasis-alist'."
     (buffer-substring-no-properties (point-min) (point-max))))
 
 ;; Install export filter for transcoding extra emphasis markers.
-(add-to-list 'org-export-filter-plain-text-functions
-	     'org-extra-emphasis-plain-text-filter)
+(dolist (it '(org-export-filter-table-cell-functions
+	      org-export-filter-paragraph-functions))
+  (add-to-list it 'org-extra-emphasis-plain-text-filter))
 
 ;;;; User Options & Commands
 
@@ -747,8 +748,9 @@ ZERO WIDTH SPACE from TEXT.  Otherwise, return TEXT unmodified."
     text)))
 
 ;; Configure Org Export Engine to strip ZERO WIDTH SPACE, if needed.
-(add-to-list 'org-export-filter-plain-text-functions
-	     'org-extra-emphasis-strip-zws-maybe t)
+(dolist (it '(org-export-filter-table-cell-functions
+	      org-export-filter-paragraph-functions))
+  (add-to-list it 'org-extra-emphasis-strip-zws-maybe it))
 
 (provide 'org-extra-emphasis)
 
