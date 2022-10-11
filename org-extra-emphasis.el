@@ -302,7 +302,7 @@ Current state is maintined in `org-extra-emphasis-info', a plist."
 	       (with-no-warnings
 		 (unless (boundp 'org-odt-extra-styles)
 		   (message "`org-odt-extra-styles' not found.  Upgrade to `ox-odt-9.5.3.467' or later.")
-		   (sleep-for 2)
+		   ;; (sleep-for 2)
 		   (setq org-odt-extra-styles nil))
 		 (setq org-odt-extra-styles
 		       (concat (or (when (boundp 'org-odt-extra-styles)
@@ -317,7 +317,8 @@ Current state is maintined in `org-extra-emphasis-info', a plist."
 			       "\n\n"
 			       odt-styles))
 		 (message "`org-odt-extra-styles' and `org-ods-automatic-styles' is updated for this session")
-		 (sleep-for 1))
+		 ;; (sleep-for 1)
+		 )
 	       odt-styles))
   ;; Re-fontify all Org buffers based on current configuration.
   (dolist (buffer (buffer-list))
