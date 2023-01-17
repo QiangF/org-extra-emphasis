@@ -27,7 +27,7 @@ Following backends are supported: HTML and enhanced ODT
 Add the following to your `user-init-file` and resetart Emacs.
 
 ```
-(requrie 'org-extra-emphasis)
+(require 'org-extra-emphasis)
 ```
 
 ##  Test Run
