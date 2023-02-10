@@ -490,8 +490,7 @@ specified in `org-extra-emphasis-alist'."
 
 ;;;; Custom Faces
 
-(defface org-extra-emphasis
-  '((t (:inherit default)))
+(defface org-extra-emphasis nil
   "A face for Org Extra Emphasis."
   :group 'org-extra-emphasis-faces)
 
