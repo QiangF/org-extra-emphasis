@@ -413,7 +413,8 @@ See `org-extra-emphasis-alist' for MARKER to face mappings."
        (format "<text:span text:style-name=\"%s\">%s</text:span>"
 	       (car (org-odt-hfy-face-to-css face)) text))
       (html
-       (format "<span style=\"%s\">%s</span>"
+       (format "<span class=\"%s\" style=\"%s\">%s</span>"
+	       face
 	       ;; An alternate implementation of
 	       ;; `hfy-face-to-css-default' which performs correctly
 	       ;; when a face specifies a `:family', and/or inherits
@@ -421,7 +422,8 @@ See `org-extra-emphasis-alist' for MARKER to face mappings."
 	       ;; flattening (or non-duplication) of face attributes
 	       ;; here is done by Emacs itself.
 	       (mapconcat (lambda (x)
-			    (format "%s: %s;" (car x) (cdr x)))
+			    (when (cdr x)
+			      (format "%s: %s;" (car x) (cdr x))))
 			  (hfy-face-to-style-i
 			   (cl-loop with props = (mapcar #'car face-attribute-name-alist)
 				    for prop in props
