@@ -407,7 +407,16 @@ Note that TEXT is in BACKEND format.
 This currently supports HTML and ODT backends.
 
 See `org-extra-emphasis-alist' for MARKER to face mappings."
-  (let* ((face (car (assoc-default marker (plist-get org-extra-emphasis-info :work-alist)))))
+  (let* ((face (car (assoc-default marker (plist-get org-extra-emphasis-info :work-alist))))
+         (encode-attribute-value
+	  (lambda (text)
+	    (dolist (pair '(("&" . "&amp;")
+			    ("<" . "&lt;")
+			    (">" . "&gt;")
+			    ("'" . "&apos;")
+			    ("\"" . "&quot;")))
+	      (setq text (replace-regexp-in-string (car pair) (cdr pair) text t t)))
+	    text)))
     (cl-case backend
       ((odt ods)
        (format "<text:span text:style-name=\"%s\">%s</text:span>"
@@ -423,7 +432,8 @@ See `org-extra-emphasis-alist' for MARKER to face mappings."
 	       ;; here is done by Emacs itself.
 	       (mapconcat (lambda (x)
 			    (when (cdr x)
-			      (format "%s: %s;" (car x) (cdr x))))
+			      (format "%s: %s;" (car x)
+                                      (funcall encode-attribute-value (cdr x)))))
 			  (hfy-face-to-style-i
 			   (cl-loop with props = (mapcar #'car face-attribute-name-alist)
 				    for prop in props
