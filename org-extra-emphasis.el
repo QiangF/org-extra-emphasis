@@ -482,9 +482,15 @@ specified in `org-extra-emphasis-alist'."
     (buffer-substring-no-properties (point-min) (point-max))))
 
 ;; Install export filter for transcoding extra emphasis markers.
-(dolist (it '(org-export-filter-table-cell-functions
-	      org-export-filter-paragraph-functions))
-  (add-to-list it 'org-extra-emphasis-plain-text-filter))
+(defun org-extra-emphasis-update-filter-functions (&optional export-filter-functions)
+  (let* ((all-filter-functions (thread-last org-export-filters-alist
+					    (seq-map #'cdr)
+					    (seq-sort #'string<))))
+    (dolist (filter-fn '(org-extra-emphasis-plain-text-filter org-extra-emphasis-strip-zws-maybe))
+      (dolist (it all-filter-functions)
+        (set it (delq filter-fn (symbol-value it))))
+      (dolist (it export-filter-functions)
+        (add-to-list it filter-fn)))))
 
 ;;;; User Options & Commands
 
@@ -627,6 +633,36 @@ specified in `org-extra-emphasis-alist'."
 	 (plist-put org-extra-emphasis-info :enabled val)
 	 (org-extra-emphasis-update)))
 
+(defcustom org-extra-emphasis-filter-functions
+  '(
+    org-export-filter-headline-functions
+    org-export-filter-paragraph-functions
+    org-export-filter-table-cell-functions
+    )
+  "List of places to which `org-extra-emphasis-plain-text-filter'
+and `org-extra-emphasis-strip-zws-maybe' hooks itself.
+
+The places should be one among the values that occur in
+`org-export-filters-alist'.
+
+By default, the list includes
+    - `org-export-filter-headline-functions'
+    - `org-export-filter-paragraph-functions'
+    - `org-export-filter-table-cell-functions',
+
+This means that text with extra emphasis which appears as plain
+text, or within headlines and table cells will be, fontified."
+  :group 'org-extra-emphasis
+  :type `(set
+          ,@(thread-last org-export-filters-alist
+			 (seq-map #'cdr)
+                         (seq-sort #'string<)
+			 (seq-map (lambda (it)
+			            (list 'const it)))))
+  :set (lambda (var value)
+         (set-default var value)
+         (org-extra-emphasis-update-filter-functions value)))
+
 ;;;;; `M-x org-extra-emphasis-mode'
 
 (defun org-extra-emphasis-mode (&optional arg)
@@ -760,9 +796,9 @@ ZERO WIDTH SPACE from TEXT.  Otherwise, return TEXT unmodified."
     text)))
 
 ;; Configure Org Export Engine to strip ZERO WIDTH SPACE, if needed.
-(dolist (it '(org-export-filter-table-cell-functions
-	      org-export-filter-paragraph-functions))
-  (add-to-list it 'org-extra-emphasis-strip-zws-maybe it))
+;; (dolist (it '(org-export-filter-table-cell-functions
+;; 	      org-export-filter-paragraph-functions))
+;;   (add-to-list it 'org-extra-emphasis-strip-zws-maybe it))
 
 (provide 'org-extra-emphasis)
 
