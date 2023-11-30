@@ -199,13 +199,14 @@
 (require 'ox-odt)
 (require 'rx)
 (require 'htmlfontify)
+(require 'map)
 
 ;;; PART-1: `org-extra-emphasis-mode'
 
 ;;;; Internal Variables
 
 (defvar org-extra-emphasis-backends
-  '(html odt ods))
+  '(html odt ods latex))
 
 (defvar org-extra-emphasis-info
   (list :enabled nil))
@@ -421,6 +422,11 @@ See `org-extra-emphasis-alist' for MARKER to face mappings."
       ((odt ods)
        (format "<text:span text:style-name=\"%s\">%s</text:span>"
 	       (car (org-odt-hfy-face-to-css face)) text))
+      (latex
+       ;; See `org-extra-emphasis-build-latex-commands'
+       (format "\\text%s{%s}"
+               (org-extra-emphasis-stringify-face face 'latex)
+               text))
       (html
        (format "<span class=\"%s\" style=\"%s\">%s</span>"
 	       face
@@ -663,6 +669,31 @@ text, or within headlines and table cells will be, fontified."
          (set-default var value)
          (org-extra-emphasis-update-filter-functions value)))
 
+;;;;; Useful Helpers
+
+(defun org-extra-emphasis-stringify-face (face replace-number-with-alphabet-p)
+  (thread-last face
+	       symbol-name
+	       (pcase--flip split-string "-")
+	       (seq-map (lambda (it)
+			  (capitalize
+			   (or (when (and replace-number-with-alphabet-p
+					  (string-match-p (rx (and bos (one-or-more digit) eos)) it))
+				 (format "%c" (+ ?A (1- (string-to-number it)))))
+			       it))))
+	       (pcase--flip string-join "")))
+
+(defun org-extra-emphasis-get-face-attributes (face)
+  (thread-last face-attribute-name-alist
+	       (seq-map #'car)
+	       (seq-sort #'string<)
+	       ;; (:background :box :extend :family :foreground :foundry :height
+	       ;;              :inherit :inverse-video :overline :slant :stipple
+	       ;;              :strike-through :underline :weight :width)
+	       (seq-map
+		(lambda (prop)
+		  (cons prop (face-attribute face prop nil t))))))
+
 ;;;;; `M-x org-extra-emphasis-mode'
 
 (defun org-extra-emphasis-mode (&optional arg)
@@ -686,6 +717,185 @@ positive; disable otherwise."
     (setq org-extra-emphasis nil)))
   (plist-put org-extra-emphasis-info :enabled org-extra-emphasis)
   (org-extra-emphasis-update))
+
+(defun org-extra-emphasis-build-latex-commands (extra-emphasis-alist)
+  "Build LaTeX directives for EXTRA-EMPHASIS-ALIST.
+
+These directives are prepended as \"#+LaTeX_HEADER:\" directives
+prior to LaTeX export.  See
+`org-extra-emphasis-before-latex-export', a
+`org-export-before-processing-hook'.
+
+Assuming the following face configuration
+
+    (custom-set-faces
+     \\='(org-extra-emphasis-01 ((t (
+                                  :background \"cornsilk\"
+                                  :family \"Comic Sans MS\"
+                                  )))))
+
+the following \"org\" snippet
+
+    !!org-extra-emphasis-01!!
+
+gets processed to the following \"org\" equivalent
+
+    #+LaTeX_HEADER: \\usepackage{xcolor}
+    #+LaTeX_HEADER: \\usepackage{fontspec}
+    #+LaTeX_HEADER: \\newfontfamily\\OrgExtraEmphasisAFont{Comic Sans MS}
+    #+LaTeX_HEADER: \\newcommand\\textOrgExtraEmphasisA[1]{\\colorbox[HTML]{fff8dc}{{\\OrgExtraEmphasisAFont #1}}}
+    
+    \\textOrgExtraEmphasisA{org-extra-emphasis-01}
+
+Note the following:
+
+- An extra emphasis face can generate following new latex directives
+  for use within the exported \"tex\" file:
+
+  - a \"\\newfontfamily\" \\OrgExtraEmphasis<WHATEVER>Font
+  - a \"\\newcommand\" \\textOrgExtraEmphasis<WHATEVER>[1]
+
+  Here <WHATEVER> is a letter from A to P designating one of the 16
+  faces from `org-extra-emphasis-01' to `org-extra-emphasis-16'
+
+- The use of packages \"xcolor\" and \"fontspec\"."
+
+  (thread-last
+    `(
+      ;; Build `\usepackage' directives
+      ,@(thread-last '("xcolor" "fontspec")
+                     (seq-map (lambda (it) (format "\\usepackage{%s}" it))))
+
+      ;; Build `\newfontfamily\OrgExtraEmphasisAFont{...}' etc
+      ,@(thread-last extra-emphasis-alist
+	             (seq-keep
+	              (pcase-lambda (`(,_marker ,face))
+	                (thread-last face
+	        	             org-extra-emphasis-get-face-attributes
+	        	             (pcase--flip map-elt :family)
+	        	             (funcall (lambda (it)
+                                                (unless (memq it '(unspecified))
+                                                  (list face it)))))))
+	             (seq-map
+	              (pcase-lambda (`(,face ,family))
+	                (format "\\newfontfamily\\%sFont{%s}"
+	        	        (org-extra-emphasis-stringify-face face 'latex)
+	        	        family))))
+
+      ;; Build `\newcommand\textOrgExtraEmphasisA[1]{...}' etc
+      ,@(thread-last extra-emphasis-alist
+		     (seq-map #'cadr)
+		     (seq-map
+                      (lambda (face)
+                        (let* ((NO-OP "%s")
+	                       (attributes (org-extra-emphasis-get-face-attributes face))
+	                       (handlers
+                                ;; Order of the handlers matters
+	                        `(
+	                          (:box ,NO-OP)
+	                          (:extend ,NO-OP)
+	                          (:family
+	                           (lambda (face family)
+	                             (if family
+		                         (format "{\\%sFont %%s}"
+                                                 (org-extra-emphasis-stringify-face face 'latex))
+		                       "%s")))
+                                  (:foreground
+	                           (lambda (face color)
+	                             (format "\\textcolor[HTML]{%s}{%%s}"
+		                             (substring (hfy-triplet color) 1))))
+	                          (:foundry ,NO-OP)
+	                          (:height
+	                           (lambda (face height)
+                                     (setq height (or height 100))
+	                             (when (and (not (display-graphic-p)) (equal 1 height))
+		                       (setq height 100))
+	                             (let* ((font-zoom 1.05)
+		                            (rel-size (pcase height
+				                        ((pred floatp)
+				                         (* font-zoom height))
+				                        ((pred integerp)
+				                         (/ (* font-zoom height) 100.0))))
+		                            (pts-table '((0.5 . tiny)
+				                         (0.7 . scriptsize)
+				                         (0.8 . footnotesize)
+				                         (0.9 . small)
+				                         (1.0 . normalsize)
+				                         (1.2 . large)
+				                         (1.4 . Large)
+				                         (1.7 . LARGE)
+				                         (2.1 . huge)
+				                         (2.5 . Huge))))
+		                       (thread-last (seq-find (pcase-lambda (`(,scale . ,command))
+					                        (>= scale rel-size))
+					                      pts-table
+					                      (car (last pts-table)))
+			                            cdr
+			                            (format "{\\%s %%s}")))))
+	                          (:inherit ,NO-OP)
+	                          (:inverse-video ,NO-OP)
+	                          (:overline ,NO-OP)
+	                          (:slant
+	                           (lambda (face slant)
+	                             (format "\\%s{%%s}"
+		                             (or (cdr (assq slant '((italic . "textit")
+					                            (reverse-italic . "textit")
+					                            (oblique . "textit")
+					                            (reverse-oblique . "textit"))))
+			                         "textit"))))
+	                          (:stipple ,NO-OP)
+	                          (:strike-through "\\sout{%s}")
+	                          (:underline "\\uline{%s}")
+	                          (:weight
+	                           (lambda (face weight)
+	                             (or (cdr (assq weight '((ultra-bold . "\\textbf{%s}")
+				                             (extra-bold . "\\textbf{%s}")
+				                             (bold . "\\textbf{%s}")
+				                             (semi-bold . "\\textbf{%s}")
+				                             (normal . "%s")
+				                             (semi-light . "\\textlf{%s}")
+				                             (light . "\\textlf{%s}")
+				                             (extra-light . "\\textlf{%s}")
+				                             (ultra-light . "\\textlf{%s}"))))
+		                         "\\textbf{%s}")))
+	                          (:width ,NO-OP)
+	                          (:invisible ,NO-OP)
+                                  (:background
+	                           (lambda (face color)
+	                             (format "\\colorbox[HTML]{%s}{%%s}"
+		                             (substring (hfy-triplet color) 1)))))))
+                          (thread-last handlers
+		                       (seq-keep
+		                        (pcase-lambda (`(,prop ,handler))
+		                          (when-let* ((val (map-elt attributes prop))
+                                                      ((not (memq val '(nil unspecified)))))
+		                            (pcase handler
+			                      ((pred stringp)
+			                       handler)
+			                      ((pred functionp)
+			                       (funcall handler face val))
+			                      (_ (error "This shouldn't happen %S" (list prop handler)))))))
+                                       (funcall (lambda (cmds)
+			                          (seq-reduce (lambda (result it)
+					                        (format it result))
+					                      cmds
+					                      "#1")))
+		                       (format "\\newcommand\\text%s[1]{%s}"
+			                       (org-extra-emphasis-stringify-face face 'latex))))))))))
+
+(defun org-extra-emphasis-before-latex-export (backend)
+  "See `org-extra-emphasis-build-latex-commands'."
+  (pcase backend
+    (`latex
+     (thread-last org-extra-emphasis-alist
+                  org-extra-emphasis-build-latex-commands
+		  (seq-map
+		   (lambda (it)
+		     (concat "#+LaTeX_HEADER: " it "\n")))
+		  (apply #'insert)))))
+
+
+(add-hook 'org-export-before-processing-hook 'org-extra-emphasis-before-latex-export 'append)
 
 ;;; PART-2: `org-extra-emphasis-intraword-emphasis-mode'
 
