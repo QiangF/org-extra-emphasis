@@ -2,14 +2,15 @@
 **Table of Contents**
 
 - [`org-extra-emphasis`: Extra Emphasis markers for Emacs Org mode](#org-extra-emphasis-extra-emphasis-markers-for-emacs-org-mode)
-    - [Setup](#setup)
-    - [Test Run](#test-run)
-    - [Screenshots](#screenshots)
-        - [`org-extra-emphasis.org` as viewed in Emacs](#org-extra-emphasisorg-as-viewed-in-emacs)
-        - [`org-extra-emphasis.html` as viewed in Firefox](#org-extra-emphasishtml-as-viewed-in-firefox)
-        - [`org-extra-emphasis.odt` as viewed in LibreOffice](#org-extra-emphasisodt-as-viewed-in-libreoffice)
-        - [`org-extra-emphasis.pdf` as exported by LibreOffice](#org-extra-emphasispdf-as-exported-by-libreoffice)
-    - [Customization](#customization)
+  - [Setup](#setup)
+  - [Test Run](#test-run)
+  - [Screenshots](#screenshots)
+    - [`org-extra-emphasis.org` as viewed in Emacs](#org-extra-emphasisorg-as-viewed-in-emacs)
+    - [`org-extra-emphasis.html` as viewed in Firefox](#org-extra-emphasishtml-as-viewed-in-firefox)
+    - [`org-extra-emphasis.odt` as viewed in LibreOffice](#org-extra-emphasisodt-as-viewed-in-libreoffice)
+    - [`org-extra-emphasis.pdf` as exported by LibreOffice](#org-extra-emphasispdf-as-exported-by-libreoffice)
+  - [Customization](#customization)
+  - [Sample User Configuration](#sample-user-configuration)
 
 <!-- markdown-toc end -->
 # `org-extra-emphasis`: Extra Emphasis markers for Emacs Org mode
@@ -129,4 +130,142 @@ You can use `M-x org-extra-emphasis-mode` to toggle this feature.
 
 To add additional backends, modify `org-extra-emphasis-formatter`
 and `org-extra-emphasis-build-backend-regexp`.
+
+## Sample User Configuration
+
+To achieve the following
+
+![`org-extra-emphasis.org` as viewed in LibreOffice](https://raw.githubusercontent.com/kjambunathan/org-extra-emphasis/main/screenshots/custom-org-extra-emphasis.org.emacs.png)
+
+create an ~custom-org-extra-emphasis.org~ file with the below content
+
+```
+[!NOTE]
+ℹ️Highlights information that users should take into account, even when skimming.ℹ️
+
+[!TIP]
+💡​_*TIP*_: Optional information to help a user be more successful.💡
+
+💡You can use💡
+
+[!IMPORTANT]
+🔑Crucial information necessary for users to succeed.🔑
+
+[!WARNING]
+⚠️Critical content demanding immediate user attention due to potential risks.⚠️
+
+[!CAUTION]
+🛑Negative potential consequences of an action.🛑
+```
+
+and view or edit it with following customization.
+
+``` emacs-lisp
+(use-package org-extra-emphasis
+  :load-path
+  "/home/kjambunathan/src/emacs-init/straight/repos/org-extra-emphasis/"
+  :after
+  (org)
+  :init
+  (defface org-extra-emphasis-note '((t (:foreground "#0969da")))
+    "A face for Org Extra Emphasis [NOTE].")
+  (defface org-extra-emphasis-tip '((t (:foreground "#1a7f37")))
+    "A face for Org Extra Emphasis [TIP].")
+  (defface org-extra-emphasis-important '((t (:foreground "#9a6700")))
+    "A face for Org Extra Emphasis [IMPORTANT].")
+  (defface org-extra-emphasis-warning '((t (:foreground "#8250df")))
+    "A face for Org Extra Emphasis [WARNING].")
+  (defface org-extra-emphasis-caution '((t (:foreground "#d1242f")))
+    "A face for Org Extra Emphasis [CAUTION].")
+  :custom
+  (org-extra-emphasis-alist
+   '(("ℹ️" org-extra-emphasis-note)
+     ("💡" org-extra-emphasis-tip)
+     ("🔑" org-extra-emphasis-important)
+     ("⚠️" org-extra-emphasis-warning)
+     ("🛑" org-extra-emphasis-caution)))
+  :bind
+  (:map org-mode-map
+        ("M-8 M-n" . "ℹ️")
+        ("M-8 M-t" . "💡")
+        ("M-8 M-i" . "🔑")
+        ("M-8 M-w" . "⚠️")
+        ("M-8 M-c" . "🛑")
+        )
+  )
+```
+
+The above customization is generated with the following `emacs-lisp` snippet:
+
+``` emacs-lisp
+`(use-package org-extra-emphasis
+   ,@(let* (
+            ;; The 5 MARKERs that I will use.
+
+            ;; It doesn't matter what they are as long as they don't
+            ;; get in the way of `org' parser.
+
+            (org-extra-emphasis-markers
+             '("ℹ️" "💡" "🔑" "⚠️" "🛑"))
+
+            ;; The 5 INTENTs behind the above markers
+
+            ;; I am using the `github'-s
+            ;; [Alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts)
+            (org-extra-emphasis-functions
+             '("note" "tip" "important" "warning"  "caution"))
+
+            ;; The 5 COLORs that I will use for above markers
+
+            ;; The colors that I use are those used by `github' for the above `alerts'
+            (org-extra-emphasis-colors
+             '("#0969da" "#1a7f37" "#9a6700" "#8250df" "#d1242f"))
+
+            ;; The 5 FACE-SPECs that I will use for above markers
+            (org-extra-emphasis-face-specs
+             (cl-loop for color in  '("#0969da" "#1a7f37" "#9a6700" "#8250df" "#d1242f")
+                      for face-spec = `((t (:foreground ,color)))
+                      collect  face-spec))
+
+            ;; The 5 face names that I prefer for the above markers
+
+            ;; Instead of faces like `org-extra-emphasis-01',
+            ;; `org-extra-emphasis-02' etc., I am using  my own face names that capture my INTENT
+            (org-extra-emphasis-faces
+             (cl-loop for i from 0 to (length org-extra-emphasis-markers)
+                      collect (intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-functions))))))
+
+       `(
+         :load-path "/home/kjambunathan/src/emacs-init/straight/repos/org-extra-emphasis/"
+         :after (org)
+         :init
+         ;; Roll out my own faces whose names match the INTENT
+         ,@(cl-loop for i from 0 to (1- (length org-extra-emphasis-markers))
+                    collect `(defface ,(intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-functions)))
+                               ',(nth i org-extra-emphasis-face-specs)
+                               ,(format "A face for Org Extra Emphasis [%s]." (upcase (nth i org-extra-emphasis-functions)))
+                               ;; :group
+                               ;; 'org-extra-emphasis-faces
+                               ))
+         :custom
+         ;; Roll out my own MARKERs which match my INTENT, map them to the correspoding FACE
+         (org-extra-emphasis-alist
+          ',(cl-loop for i from 0 to (1- (length org-extra-emphasis-markers))
+                     collect `(,(nth i org-extra-emphasis-markers)
+                               ,(intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-functions))) )))
+
+         ;; Create a mapping to insert the above "fancy" markers.
+
+         ;; For example, to insert a CAUTION marker, use `M-8 M-c';
+         ;; note that `c' is the first character of the intent--`CAUTION'.
+         :bind (:map org-mode-map
+                     ,@(cl-loop with prefix-key = "M-8"
+                                for i from 0 to (1- (length org-extra-emphasis-markers))
+                                for intent = (nth i org-extra-emphasis-functions)
+                                for key = (substring intent 0 1)
+                                collect `(,(format "%s M-%s" prefix-key key) . ,(nth i org-extra-emphasis-markers))
+                                ))
+
+         )))
+```
 
