@@ -137,7 +137,7 @@ To achieve the following
 
 ![`org-extra-emphasis.org` as viewed in LibreOffice](https://raw.githubusercontent.com/kjambunathan/org-extra-emphasis/main/screenshots/custom-org-extra-emphasis.org.emacs.png)
 
-create an ~custom-org-extra-emphasis.org~ file with the below content
+create an `custom-org-extra-emphasis.org` file with the below content
 
 ```
 [!NOTE]
