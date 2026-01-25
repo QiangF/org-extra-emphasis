@@ -162,8 +162,8 @@ and view or edit it with following customization.
 
 ``` emacs-lisp
 (use-package org-extra-emphasis
-  :load-path
-  "/home/kjambunathan/src/emacs-init/straight/repos/org-extra-emphasis/"
+  ;; :load-path
+  ;; "/home/kjambunathan/src/emacs-init/straight/repos/org-extra-emphasis/"
   :after
   (org)
   :init
