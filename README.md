@@ -133,10 +133,13 @@ and `org-extra-emphasis-build-backend-regexp`.
 
 ## Sample User Configuration
 
-The screenshot below will surprise you ... You will be wondering
-where the _emphasis markers_ are.  The fancy unicode
-characters--ℹ️ 💡🔑 ⚠️ 🛑--are the _emphasis markers_.  The best markers
-are those that 
+The screenshot below will surprise you ... 
+
+Are you wondering where the _emphasis markers_ are.  If yes, the fancy
+unicode characters--ℹ️ 💡🔑 ⚠️ 🛑--that you see are indeed the _emphasis
+markers_.  
+
+Please realise that, the best _emphasis markers_ are those that
 
 - do not normally occur in regular text
 - do not interfere with the markup characters in `org` syntax
