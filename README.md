@@ -133,6 +133,20 @@ and `org-extra-emphasis-build-backend-regexp`.
 
 ## Sample User Configuration
 
+The screenshot below will surprise you ... You will be wondering
+where the _emphasis markers_ are.  The fancy unicode
+characters--ℹ️ 💡🔑 ⚠️ 🛑--are the _emphasis markers_.  The best markers
+are those that 
+
+- do not normally occur in regular text
+- do not interfere with the markup characters in `org` syntax
+- do not run in to the markup characters in the format that you export to
+
+The fancy characters above have all the above characteristics.  In
+addition, they have the following property:
+
+- they are _visual_ and help you orient to the text at hand.
+
 To achieve the following
 
 ![`org-extra-emphasis.org` as viewed in LibreOffice](https://raw.githubusercontent.com/kjambunathan/org-extra-emphasis/main/screenshots/custom-org-extra-emphasis.org.emacs.png)
@@ -212,7 +226,7 @@ The above customization is generated with the following `emacs-lisp` snippet:
 
             ;; I am using the `github'-s
             ;; [Alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts)
-            (org-extra-emphasis-functions
+            (org-extra-emphasis-intents
              '("note" "tip" "important" "warning"  "caution"))
 
             ;; The 5 COLORs that I will use for above markers
@@ -233,7 +247,7 @@ The above customization is generated with the following `emacs-lisp` snippet:
             ;; `org-extra-emphasis-02' etc., I am using  my own face names that capture my INTENT
             (org-extra-emphasis-faces
              (cl-loop for i from 0 to (length org-extra-emphasis-markers)
-                      collect (intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-functions))))))
+                      collect (intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-intents))))))
 
        `(
          :load-path "/home/kjambunathan/src/emacs-init/straight/repos/org-extra-emphasis/"
@@ -241,18 +255,18 @@ The above customization is generated with the following `emacs-lisp` snippet:
          :init
          ;; Roll out my own faces whose names match the INTENT
          ,@(cl-loop for i from 0 to (1- (length org-extra-emphasis-markers))
-                    collect `(defface ,(intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-functions)))
+                    collect `(defface ,(intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-intents)))
                                ',(nth i org-extra-emphasis-face-specs)
-                               ,(format "A face for Org Extra Emphasis [%s]." (upcase (nth i org-extra-emphasis-functions)))
+                               ,(format "A face for Org Extra Emphasis [%s]." (upcase (nth i org-extra-emphasis-intents)))
                                ;; :group
                                ;; 'org-extra-emphasis-faces
                                ))
          :custom
-         ;; Roll out my own MARKERs which match my INTENT, map them to the correspoding FACE
+         ;; Roll out my own MARKERs which match my INTENT, and map them to the correspoding FACE
          (org-extra-emphasis-alist
           ',(cl-loop for i from 0 to (1- (length org-extra-emphasis-markers))
                      collect `(,(nth i org-extra-emphasis-markers)
-                               ,(intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-functions))) )))
+                               ,(intern (format "org-extra-emphasis-%s" (nth i org-extra-emphasis-intents))) )))
 
          ;; Create a mapping to insert the above "fancy" markers.
 
@@ -261,7 +275,7 @@ The above customization is generated with the following `emacs-lisp` snippet:
          :bind (:map org-mode-map
                      ,@(cl-loop with prefix-key = "M-8"
                                 for i from 0 to (1- (length org-extra-emphasis-markers))
-                                for intent = (nth i org-extra-emphasis-functions)
+                                for intent = (nth i org-extra-emphasis-intents)
                                 for key = (substring intent 0 1)
                                 collect `(,(format "%s M-%s" prefix-key key) . ,(nth i org-extra-emphasis-markers))
                                 ))
