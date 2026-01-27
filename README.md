@@ -11,6 +11,10 @@
     - [`org-extra-emphasis.pdf` as exported by LibreOffice](#org-extra-emphasispdf-as-exported-by-libreoffice)
   - [Customization](#customization)
   - [Sample User Configuration](#sample-user-configuration)
+    - [A note about customizing `org-extra-emphasis`](#a-note-about-customizing-org-extra-emphasis)
+    - [Screenshot of customized `org-extra-emphasis`](#screenshot-of-customized-org-extra-emphasis)
+    - [A sample `use-package` configuration](#a-sample-use-package-configuration)
+    - [Generator for the above `use-package` config](#generator-for-the-above-use-package-config)
 
 <!-- markdown-toc end -->
 # `org-extra-emphasis`: Extra Emphasis markers for Emacs Org mode
@@ -133,13 +137,16 @@ and `org-extra-emphasis-build-backend-regexp`.
 
 ## Sample User Configuration
 
+### In `org-extra-emphasis`, the _emphasis markers_ are customizable
+
 The screenshot below will surprise you ... 
 
-Are you wondering where the _emphasis markers_ are.  If yes, the fancy
-unicode characters--ℹ️ 💡🔑 ⚠️ 🛑--that you see are indeed the _emphasis
-markers_.  
+Are you wondering where the _emphasis markers_ are?
 
-Please realise that, the best _emphasis markers_ are those that
+If yes, the fancy unicode characters--ℹ️ 💡🔑 ⚠️ 🛑--that you see are
+indeed the _emphasis markers_.
+
+Note that, the best _emphasis markers_ are those that
 
 - do not normally occur in regular text
 - do not interfere with the markup characters in `org` syntax
@@ -148,9 +155,14 @@ Please realise that, the best _emphasis markers_ are those that
 The fancy characters above have all the above characteristics.  In
 addition, they have the following property:
 
-- they are _visual_ and help you orient to the text at hand.
+- they are _visual_ and help you orient yourself reading or editing
+  the text at hand.  They make the _intent_ obvious.
+
+### Screenshot of customized `org-extra-emphasis`
 
 To achieve the following
+
+**`org-extra-emphasis` with _fancy_ _emphasis markers_**
 
 ![`org-extra-emphasis.org` as viewed in LibreOffice](https://raw.githubusercontent.com/kjambunathan/org-extra-emphasis/main/screenshots/custom-org-extra-emphasis.org.emacs.png)
 
@@ -176,6 +188,8 @@ create an `custom-org-extra-emphasis.org` file with the below content
 ```
 
 and view or edit it with following customization.
+
+### A sample `use-package` configuration
 
 ``` emacs-lisp
 (use-package org-extra-emphasis
@@ -211,6 +225,8 @@ and view or edit it with following customization.
         )
   )
 ```
+
+### Generator for the above `use-package` config
 
 The above customization is generated with the following `emacs-lisp` snippet:
 
