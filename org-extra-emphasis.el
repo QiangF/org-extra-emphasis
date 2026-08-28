@@ -397,7 +397,14 @@ differences are:
 ;; faces `org-extra-emphasis-01', `org-extra-emphasis-02' reconfigured,
 ;; we don't get a notification.  The following export hook ensures
 ;; that `org-extra-emphasis-info' is in sync with user configuration.
-(add-hook 'org-export-before-processing-hook 'org-extra-emphasis-update)
+(defconst org-extra-emphasis--export-before-processing-hook
+  (if (boundp 'org-export-before-processing-functions)
+      'org-export-before-processing-functions
+    'org-export-before-processing-hook)
+  "Org hook run before export processing.")
+
+(add-hook org-extra-emphasis--export-before-processing-hook
+	  #'org-extra-emphasis-update)
 
 ;;;; Export Extra Emphasis Markers
 
@@ -672,16 +679,16 @@ text, or within headlines and table cells will be, fontified."
 ;;;;; Useful Helpers
 
 (defun org-extra-emphasis-stringify-face (face replace-number-with-alphabet-p)
-  (thread-last face
-	       symbol-name
-	       (pcase--flip split-string "-")
-	       (seq-map (lambda (it)
-			  (capitalize
-			   (or (when (and replace-number-with-alphabet-p
-					  (string-match-p (rx (and bos (one-or-more digit) eos)) it))
-				 (format "%c" (+ ?A (1- (string-to-number it)))))
-			       it))))
-	       (pcase--flip string-join "")))
+  (string-join
+   (seq-map (lambda (it)
+	      (capitalize
+	       (or (when (and replace-number-with-alphabet-p
+			      (string-match-p
+			       (rx (and bos (one-or-more digit) eos)) it))
+		     (format "%c" (+ ?A (1- (string-to-number it)))))
+		   it)))
+	    (split-string (symbol-name face) "-"))
+   ""))
 
 (defun org-extra-emphasis-get-face-attributes (face)
   (thread-last face-attribute-name-alist
@@ -724,7 +731,7 @@ positive; disable otherwise."
 These directives are prepended as \"#+LaTeX_HEADER:\" directives
 prior to LaTeX export.  See
 `org-extra-emphasis-before-latex-export', a
-`org-export-before-processing-hook'.
+`org-export-before-processing-functions' function.
 
 Assuming the following face configuration
 
@@ -770,12 +777,12 @@ Note the following:
       ,@(thread-last extra-emphasis-alist
 	             (seq-keep
 	              (pcase-lambda (`(,_marker ,face))
-	                (thread-last face
-	        	             org-extra-emphasis-get-face-attributes
-	        	             (pcase--flip map-elt :family)
-	        	             (funcall (lambda (it)
-                                                (unless (memq it '(unspecified))
-                                                  (list face it)))))))
+			(let ((family
+			       (map-elt
+				(org-extra-emphasis-get-face-attributes face)
+				:family)))
+			  (unless (memq family '(unspecified))
+			    (list face family)))))
 	             (seq-map
 	              (pcase-lambda (`(,face ,family))
 	                (format "\\newfontfamily\\%sFont{%s}"
@@ -895,7 +902,8 @@ Note the following:
 		  (apply #'insert)))))
 
 
-(add-hook 'org-export-before-processing-hook 'org-extra-emphasis-before-latex-export 'append)
+(add-hook org-extra-emphasis--export-before-processing-hook
+	  #'org-extra-emphasis-before-latex-export 'append)
 
 ;;; PART-2: `org-extra-emphasis-intraword-emphasis-mode'
 
